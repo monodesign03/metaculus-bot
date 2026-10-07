@@ -1,3 +1,65 @@
+# Ensemble forecasting bot — Fall 2026 FutureEval
+
+A fork of [Metaculus/metac-bot-template](https://github.com/Metaculus/metac-bot-template) that competes on its own in the Metaculus FutureEval bot tournament and MiniBench. There is no human in the loop: the bot researches, forecasts and posts its reasoning by itself.
+
+## How it works
+1. **Research, first pass (in parallel).**
+   - The pages linked in the resolution criteria, fetched and trimmed to the passages that matter. JavaScript-heavy pages and PDFs go through a reader service.
+   - Similar questions Metaculus has already resolved, using Metaculus' own similarity ranking. These give a ready-made base rate.
+   - Open Manifold markets on the topic.
+   - AskNews news search, when keys are set.
+   - A broad web-search pass using Claude Sonnet 5.5 with native search.
+2. **Research, second pass.** GPT-5.4 with native web search reads everything found so far, then searches for the 2–4 facts that are still missing, unclear or stale.
+3. **Forecasts.** High-reasoning-effort models: GPT-5.4 first, then Claude Opus 5.5 and Claude Sonnet 5.5, as many as the budget allows. If every member fails, a fallback model answers so a provider outage doesn't cost the question.
+4. **Aggregation.** No extremizing.
+   - Binary: the median, capped to 3–97%.
+   - Multiple choice: the average, with at least 2% on every option.
+   - Numeric and date: a mixture of the members' distributions, asked for at the 5th to 95th percentiles.
+5. **Timing.** Main-tournament questions are open for only about 1.5 hours, so they always go first, soonest-closing first. MiniBench runs in batches of 3, and the bot re-checks the main tournament after every batch. MiniBench gets at most 15 minutes per run, and every run stops after 42 minutes. The workflow runs every 10 minutes.
+6. **Budget.** Every run reads the remaining OpenRouter credit and picks the best plan the credit can sustain until the season ends (`budget.py`). The main tournament pays about 8 times more per question, so MiniBench is only played once the main tournament is well funded.
+
+| Credit left (early October) | Main tournament | MiniBench |
+|---|---|---|
+| ~$100 | lean: GPT-5.4 high + full research (~$0.30/question) | skipped |
+| ~$160 | standard: GPT-5.4 + Opus 5.5 (~$0.50) | skipped |
+| ~$250 | standard | minimal (~$0.22) |
+| ~$300 | strong: GPT-5.4 ×2 + Opus 5.5 (~$0.67) | minimal |
+| $450+ | max: GPT ×2, Opus ×2, Sonnet (~$0.98) | standard |
+
+## Why these choices
+These come from the published analyses of past seasons ([Spring 2026 results](https://www.lesswrong.com/posts/wZBbDqzfBjYG58CxK/futureeval-spring-results-pros-beat-bots-but-the-gap-is), [Spring 2026 bot-maker survey](https://forum.effectivealtruism.org/posts/tJoxFWkRev5wrEBar/what-ai-forecasting-strategy-works-best-spring-2026-survey), [AI forecasting in 2026: what 11 analyses say](https://www.lesswrong.com/posts/a82q6yd8zKpYk56cF/ai-forecasting-in-2026-what-11-analyses-say)):
+- **Reasoning effort.** High effort beat standard effort in 8 of 8 model pairs (p = 0.004).
+- **Model.** Using GPT-5.4 as the final model was the strongest single marker of a top bot (r = +0.42). Metaculus' own "highest accuracy" reference bot uses Claude Opus 5.
+- **Research.** Each of these was linked to better scores:
+  - web scraping (r = +0.33)
+  - checking similar questions and markets (r = +0.34)
+  - OpenAI web search (r = +0.27)
+  - researching sub-questions (r = +0.24)
+  The Spring winner had "link assistants" that read resolution links. Bot makers report that resolution-criteria mistakes cause the worst misses.
+- **Calibration.** Capping extreme probabilities was linked to better scores among winners (r = +0.48). Extremizing was linked to worse scores (r = −0.30).
+- **Base rates.** Explicit base rates (r = +0.38) and looking up similar resolved questions were more common among winners.
+
+None of these correlations survives a multiple-testing correction on its own, so they are good bets, not guarantees.
+
+## Differences from the stock template
+- **Fall 2026 tournament.** It targets the tournament by slug (`bot_config.py`). The forecasting-tools version pinned in `poetry.lock` (0.2.92) still points `CURRENT_AI_COMPETITION_ID` at the Summer 2026 tournament, and its default model is gpt-4o.
+- **One event loop.** The main tournament and MiniBench run in a single event loop. The template reuses a class-level `asyncio.Semaphore` across two `asyncio.run` calls, which can raise "bound to a different event loop".
+- **Metaculus Cup.** The bot doesn't spend credits there (bots are not prize-eligible) unless `ENABLE_METACULUS_CUP=true`.
+- **Test Bot.** The workflow forecasts at most 4 questions, one per type.
+- **Failure e-mails.** A run fails only when every question failed, so a single flaky question doesn't trigger an e-mail.
+- **Keepalive.** A weekly `keepalive` workflow stops GitHub from pausing the schedule after 60 days without commits.
+
+## Setup
+1. **Metaculus.** Create an account, create a bot at https://www.metaculus.com/futureeval/participate/ and copy its token. Fill in the participation form, which is required before forecasting; the same form is where free LLM credits are requested: https://forms.gle/aQdYMq9Pisrf1v7d8
+2. **Secrets.** In this repository go to Settings → Secrets and variables → Actions. Add `METACULUS_TOKEN` and `OPENROUTER_API_KEY`, and optionally `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` (free for participants).
+3. **Actions.** Open the Actions tab, enable workflows, and run **Test Bot** once. After that **Forecast on new AI tournament questions** runs every 10 minutes by itself.
+4. **Visibility.** Keep the repository public. Actions minutes are free for public repositories, and open-source bots are prize-eligible.
+
+All settings live in `bot_config.py`: tournament slugs (update them each season), models and prices, tiers, plans, caps and timing. To check the code without network access or cost, run `poetry run python tests/test_offline.py`.
+
+
+*The original template README follows.*
+
 # Simple Metaculus forecasting bot
 This repository contains a simple bot meant to get you started with creating your own bot for the AI Forecasting Tournament. Go to https://www.metaculus.com/futureeval/participate/ for more info and tournament rules (and then go to the  "Getting Started" section of our [resources](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#want-to-join-the-ai-forecasting-benchmark) page).
 
