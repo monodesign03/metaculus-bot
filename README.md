@@ -1,4 +1,4 @@
-# Ensemble forecasting bot — Fall 2026 FutureEval
+# Ensemble forecasting bot — Fall 2026 FutureEval 
 
 A fork of [Metaculus/metac-bot-template](https://github.com/Metaculus/metac-bot-template) that competes on its own in the Metaculus FutureEval bot tournament and MiniBench. There is no human in the loop: the bot researches, forecasts and posts its reasoning by itself.
 
