@@ -61,4 +61,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sleep 480
-          gh workflow run run_bot_on_tournament.yaml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+          for attempt in 1 2 3 4 5; do
+            if gh workflow run run_bot_on_tournament.yaml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"; then
+              echo "Next run requested"
+              exit 0
+            fi
+            echo "Attempt $attempt failed, retrying in 30 seconds"
+            sleep 30
+          done
+          exit 1
