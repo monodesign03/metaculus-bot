@@ -677,6 +677,7 @@ class EnsembleBot(TemplateBot):
             (f) If the quantity is a market price, index, rate or other time series: its typical day-to-day variation, and the spread that implies over the time remaining (roughly daily variation times the square root of the number of days). Your 5th-95th percentile range should be at least that wide.
             (g) The expectations of experts and markets.
             (h) A brief description of an unexpected scenario that results in a low outcome, and one that results in a high outcome.
+            (i) A sanity check: your percentiles must use the same units and scale as the latest known value and as the question's lower and upper bounds above. If they do not, fix them before answering.
 
             {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
@@ -800,9 +801,10 @@ def mixture_of_distributions(
     predictions: Sequence[NumericDistribution], question: NumericQuestion | DateQuestion
 ) -> NumericDistribution:
     """Average of the members' CDFs (a mixture), which keeps every member's
-    plausible range instead of narrowing to the median."""
-    if len(predictions) == 1:
-        return predictions[0]
+    plausible range instead of narrowing to the median. A small share of
+    probability is then spread evenly across the question's range, so an
+    outcome far from every member's guess (wrong units, misread criteria,
+    surprise data) costs a moderate amount instead of a huge one."""
     cdfs = [prediction.get_cdf() for prediction in predictions]
     x_axis = np.array([point.value for point in cdfs[0]])
     heights = []
@@ -812,9 +814,14 @@ def mixture_of_distributions(
             raise ValueError("Ensemble members' CDFs use different x axes")
         heights.append([point.percentile for point in cdf])
     mean_heights = np.mean(np.array(heights), axis=0)
+    # Even spread between the mixture's own endpoints, which keeps the
+    # open/closed-bound rules Metaculus enforces at both ends.
+    even = np.linspace(mean_heights[0], mean_heights[-1], len(mean_heights))
+    weight = cfg.NUMERIC_TAIL_WEIGHT
+    final_heights = (1 - weight) * mean_heights + weight * even
     mixed = [
         Percentile(value=float(value), percentile=float(height))
-        for value, height in zip(x_axis, mean_heights)
+        for value, height in zip(x_axis, final_heights)
     ]
     return NumericDistribution.from_question(mixed, question)
 

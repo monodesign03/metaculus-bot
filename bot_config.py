@@ -127,6 +127,10 @@ SOURCE_PAGE_CHAR_LIMIT = 3_000
 BINARY_PROBABILITY_FLOOR = 0.03
 BINARY_PROBABILITY_CEILING = 0.97
 MULTIPLE_CHOICE_OPTION_FLOOR = 0.02  # 0.01 when there are more than 10 options
+# Share of probability spread evenly over a numeric/date question's range.
+# Added after the first results: the three worst scores were numeric
+# questions where the outcome fell far outside the bot's range.
+NUMERIC_TAIL_WEIGHT = 0.10
 
 # ------------------------------------------------------- cost estimates ----
 # Rough numbers used only for budgeting. Real usage is read back from
