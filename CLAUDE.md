@@ -47,7 +47,7 @@ roughly $0.50 per question at the `standard` tier and $0.17 at `minimal`.
 
 - AskNews: the owner has a single API key (`ank_...`), not OAuth. The
   workflow now passes `ASKNEWS_API_KEY`; the owner must save the key as the
-  GitHub secret `ASKNEWS_API_KEY` and remove `ASKNEWS_CLIENT_ID` (with both
-  set, forecasting_tools would prefer OAuth). Then check that the log's 🧠
+  GitHub secret `ASKNEWS_API_KEY`. `ASKNEWS_SECRET` is empty, so the
+  leftover `ASKNEWS_CLIENT_ID` is ignored. Then check that the log's 🧠
   line says "AskNews".
 - End of November: check the leaderboard and analyse the worst questions.
