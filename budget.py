@@ -130,13 +130,18 @@ def choose_plan(remaining_usd: float | None, today: date) -> Plan | None:
             main
         ) + expected_minibench * estimated_cost_per_question(minibench)
         if projected <= spendable:
-            return Plan(
-                main,
-                minibench,
+            reason = (
                 f"${remaining_usd:.2f} left, ~{expected_main:.0f} main + "
                 f"~{expected_minibench:.0f} MiniBench questions expected in "
-                f"{days_left} days, projected spend ${projected:.2f}",
+                f"{days_left} days, projected spend ${projected:.2f}"
             )
+            if minibench is None and remaining_usd >= cfg.MINIBENCH_ALWAYS_ON_MIN_CREDIT:
+                minibench = cfg.tier_by_name(cfg.MINIBENCH_ALWAYS_ON_TIER)
+                reason += (
+                    f"; MiniBench kept on at '{minibench.name}' while credit is "
+                    f"at least ${cfg.MINIBENCH_ALWAYS_ON_MIN_CREDIT:.0f}"
+                )
+            return Plan(main, minibench, reason)
 
     cheapest = cfg.TIERS[-1]
     if spendable >= estimated_cost_per_question(cheapest):

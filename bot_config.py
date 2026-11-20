@@ -29,6 +29,12 @@ METACULUS_CUP_TOURNAMENT = "metaculus-cup-fall-2026"  # bots not prize-eligible
 SEASON_LAST_QUESTION_DAY = date(2026, 12, 12)
 MAIN_QUESTIONS_PER_DAY = 4.5  # 300-400 questions over ~11 weeks
 MINIBENCH_QUESTIONS_PER_DAY = 4.3  # ~60 questions per two-week round
+# MiniBench resolves within two weeks, so it pays out quickly and gives fast
+# feedback for improving the bot. It stays on at the cheapest tier while the
+# remaining credit is at least this much; below it, every dollar goes to the
+# main tournament.
+MINIBENCH_ALWAYS_ON_MIN_CREDIT = 20.0
+MINIBENCH_ALWAYS_ON_TIER = "minimal"
 MIN_PLANNING_DAYS = 7  # after the season ends, still plan for a week ahead
 CREDIT_RESERVE_USD = 2.0  # never plan to spend the last couple of dollars
 

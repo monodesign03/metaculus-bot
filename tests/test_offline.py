@@ -363,8 +363,9 @@ def test_budget_planner() -> None:
 
     day = date(2026, 10, 7)
     expectations = {
-        100: ("lean", "skip"),
-        160: ("standard", "skip"),
+        15: ("minimal", "skip"),
+        100: ("lean", "minimal"),
+        160: ("standard", "minimal"),
         250: ("standard", "minimal"),
         300: ("strong", "minimal"),
         5_000: ("max", "standard"),
@@ -510,7 +511,7 @@ def test_tournament_runner() -> None:
     original_box = cfg.MINIBENCH_SECONDS_PER_RUN
     MetaculusClient.get_all_open_questions_from_tournament = fake_open_questions
     try:
-        budget.remaining_openrouter_credit = lambda *args, **kwargs: 100.0  # lean, MiniBench off
+        budget.remaining_openrouter_credit = lambda *args, **kwargs: 15.0  # tight budget: MiniBench off
         reports = asyncio.run(bot.forecast("tournament", publish=False))
         assert asked == [cfg.MAIN_TOURNAMENT], asked
         assert len(reports) == 1 and isinstance(reports[0], ForecastReport), reports
